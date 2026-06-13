@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% block pagetitle %}AI Diagnostic Engine{% endblock pagetitle %}
+
+{% block body %}
+<style>
+    .drag-drop-zone {
+        border: 2px dashed var(--glass-border);
+        border-radius: 12px;
+        padding: 3rem 1.5rem;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.02);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .drag-drop-zone:hover, .drag-drop-zone.dragover {
+        border-color: var(--accent-green);
+        background: rgba(60, 208, 112, 0.05);
+        box-shadow: 0 0 20px 0 rgba(60, 208, 112, 0.1);
+    }
+
+    .file-chosen-text {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        display: block;
+        margin-top: 1rem;
+        word-break: break-all;
+    }
+
+    /* Loading Overlay styling */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(5, 16, 11, 0.85);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+    }
+
+    .spinner-custom {
+        width: 70px;
+        height: 70px;
+        border: 5px solid rgba(60, 208, 112, 0.1);
+        border-top-color: var(--accent-green);
+        border-radius: 50%;
+        animation: spin 1s infinite linear;
+    }
+
+    .info-list li {
+        margin-bottom: 0.75rem;
+        padding-left: 0.5rem;
+        border-left: 2px solid var(--accent-green);
+        list-style-type: none;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="spinner-custom mb-4"></div>
+    <h3 class="brand-font text-white mb-2">Analyzing Leaf Sample</h3>
+    <p class="text-muted text-center max-width-350">Our Deep Learning model is computing Grad-CAM localizations and classification scores...</p>
+</div>
+
+<div class="row align-items-stretch">
+    <!-- Left column: Educational info -->
+    <div class="col-lg-4 mb-4 d-flex">
+        <div class="glass-card w-100 d-flex flex-column justify-content-between">
+            <div>
+                <h3 class="mb-3 text-white">Why Diagnostic Precision Matters?</h3>
+                <p class="text-muted leading-relaxed">
+                    Plant pathology is vital for securing global food pipelines. Without accurate diagnosis of diseases before symptoms spread widely, pesticide and fertilizer application risks being misdirected, leading to resource waste and environmental damage.
+                </p>
+                <p class="text-muted leading-relaxed">
+                    By combining transfer learning CNNs with localizing heatmaps (Grad-CAM), LeafAI enables instant, explainable detection to ensure high yield outputs.
+                </p>
+            </div>
+            <div class="mt-4 pt-3 border-top border-secondary">
+                <small class="text-muted">Currently active model: <span class="badge bg-secondary">EfficientNet-B0 (39 Categories)</span></small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Middle column: Image uploader -->
+    <div class="col-lg-4 mb-4 d-flex">
+        <div class="glass-card w-100 text-center d-flex flex-column justify-content-between">
+            <div>
+                <h3 class="mb-4 text-white">Leaf Diagnostics</h3>
+                
+                <form action="/submit" method="POST" enctype="multipart/form-data" id="upload-form">
+                    <!-- Custom Drag & Drop Field -->
+                    <div class="drag-drop-zone mb-4" id="drop-zone">
+                        <i class="ion-ios-cloud-upload-outline" style="font-size: 3.5rem; color: var(--accent-green);"></i>
+                        <h5 class="mt-3 text-white">Drag & Drop Leaf Image</h5>
+                        <p class="text-muted small">or <span class="text-decoration-underline" style="color: var(--accent-green); font-weight:600;">browse filesystem</span></p>
+                        
+                        <input type="file" id="actual-btn" name="image" accept="image/*" hidden required />
+                        <span id="file-chosen" class="file-chosen-text">No image selected</span>
+                    </div>
+
+                    <!-- Camera Feed controls (optional fallback) -->
+                    <div class="d-grid gap-2 mb-4">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="camera-toggle-btn">
+                            <i class="ion-camera me-2"></i>Use Webcam Capture
+                        </button>
+                    </div>
+
+                    <div id="camera-container" class="mb-4" style="display: none; border-radius: 12px; overflow: hidden; border: 1px solid var(--glass-border);">
+                        <video id="camera-feed" width="100%" height="auto" autoplay class="d-block"></video>
+                        <div class="p-2 bg-dark">
+                            <button type="button" class="btn btn-sm btn-premium py-1 px-3" id="capture-btn">Capture Photo</button>
+                        </div>
+                    </div>
+
+                    <canvas id="canvas" style="display: none;"></canvas>
+                    <input type="file" id="captured-image" name="image" accept="image/png" hidden />
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-premium btn-lg w-100">Run Deep Inference</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column: Rules / Tips -->
+    <div class="col-lg-4 mb-4 d-flex">
+        <div class="glass-card w-100 d-flex flex-column justify-content-between">
+            <div>
+                <h3 class="mb-3 text-white">Prevention Best Practices</h3>
+                <ul class="info-list ps-0">
+                    <li>Maintain strong air circulation around plant blocks.</li>
+                    <li>Routinely rotate crops to maintain soil nutrients.</li>
+                    <li>Inspect leaf undersides prior to greenhouse seeding.</li>
+                    <li>Sanitize clipping tools between different rows.</li>
+                    <li>Allow root soil to reach proper warm temperatures.</li>
+                </ul>
+            </div>
+            <div>
+                <a target="_blank" href="https://www.thespruce.com/prevent-plant-diseases-in-your-garden-2539511" class="btn btn-premium-outline w-100 text-center">
+                    Read Preventative Guide
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const actualBtn = document.getElementById('actual-btn');
+    const fileChosen = document.getElementById('file-chosen');
+    const uploadForm = document.getElementById('upload-form');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    
+    // Drag and Drop implementation
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+            actualBtn.files = files;
+            fileChosen.textContent = files[0].name;
+            fileChosen.style.color = 'var(--accent-green)';
+        }
+    }, false);
+
+    // Clicks on dropzone open the explorer
+    dropZone.addEventListener('click', () => {
+        actualBtn.click();
+    });
+
+    actualBtn.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            fileChosen.textContent = this.files[0].name;
+            fileChosen.style.color = 'var(--accent-green)';
+        }
+    });
+
+    // Loading overlay on submission
+    uploadForm.addEventListener('submit', (e) => {
+        // Double check a file is selected
+        if (!actualBtn.files.length && !document.getElementById('captured-image').files.length) {
+            e.preventDefault();
+            alert("Please select or capture an image before running inference.");
+            return;
+        }
+        loadingOverlay.style.display = 'flex';
+    });
+
+    // Camera Support
+    const cameraToggleBtn = document.getElementById('camera-toggle-btn');
+    const cameraContainer = document.getElementById('camera-container');
+    const cameraFeed = document.getElementById('camera-feed');
+    const captureBtn = document.getElementById('capture-btn');
+    const canvas = document.getElementById('canvas');
+    const capturedImageInput = document.getElementById('captured-image');
+    let stream = null;
+
+    cameraToggleBtn.addEventListener('click', async () => {
+        if (cameraContainer.style.display === 'none') {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                cameraFeed.srcObject = stream;
+                cameraContainer.style.display = 'block';
+                cameraToggleBtn.innerHTML = '<i class="ion-close-round me-2"></i>Close Webcam';
+            } catch (err) {
+                console.error("Camera access error:", err);
+                alert("Failed to access camera: " + err.message);
+            }
+        } else {
+            stopCamera();
+        }
+    });
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        cameraFeed.srcObject = null;
+        cameraContainer.style.display = 'none';
+        cameraToggleBtn.innerHTML = '<i class="ion-camera me-2"></i>Use Webcam Capture';
+    }
+
+    captureBtn.addEventListener('click', () => {
+        const context = canvas.getContext('2d');
+        canvas.width = cameraFeed.videoWidth;
+        canvas.height = cameraFeed.videoHeight;
+        context.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
+        
+        // Convert to blob and assign to virtual file inputs
+        canvas.toBlob((blob) => {
+            const file = new File([blob], "webcam_capture.png", { type: "image/png" });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            
+            // Assign to both to satisfy form requirements
+            actualBtn.files = dataTransfer.files;
+            capturedImageInput.files = dataTransfer.files;
+            
+            fileChosen.textContent = "Webcam Capture Loaded";
+            fileChosen.style.color = 'var(--accent-green)';
+            
+            stopCamera();
+        }, "image/png");
+    });
+</script>
+{% endblock body %}

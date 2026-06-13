@@ -1,0 +1,97 @@
+# ─── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+
+# ─── Virtual Environments ─────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+*.env
+
+# ─── Jupyter Notebooks ────────────────────────────────────
+# Keep notebooks under version control if desired; comment out if not
+# Model/
+.ipynb_checkpoints/
+*.ipynb
+
+# ─── ML Model Weights & Checkpoints ──────────────────────
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.pkl
+*.onnx
+*.pb
+*.tflite
+*.keras
+*.weights
+checkpoints/
+runs/
+saved_models/
+
+# ─── Uploaded / Runtime Images ────────────────────────────
+# The uploads folder holds user-submitted images at runtime — do NOT track
+static/uploads/*
+# Keep the directory itself in git
+!static/uploads/.gitkeep
+
+# Test images are large binary assets — use Git LFS or exclude
+test_images/*
+!test_images/.gitkeep
+!test_images/Readme.md
+
+# ─── Logs & Monitoring ────────────────────────────────────
+*.log
+logs/
+*.out
+mlruns/
+.mlflow/
+
+# ─── OS & Editor Artefacts ────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# ─── Distribution / Build ─────────────────────────────────
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+site/
+
+# ─── Testing & Coverage ───────────────────────────────────
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+
+# ─── Docker ───────────────────────────────────────────────
+# docker-compose.override.yml is environment-specific; ignore if present
+docker-compose.override.yml
+
+# ─── Secrets & Credentials ────────────────────────────────
+*.pem
+*.key
+*.cert
+secrets/
+config/local_settings.py
+
+# ─── Miscellaneous ────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig

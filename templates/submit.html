@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% block pagetitle %}Diagnostic Result: {{ title }}{% endblock pagetitle %}
+
+{% block body %}
+<style>
+    .result-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+
+    .disease-title {
+        color: var(--accent-green);
+        font-weight: 800;
+        font-size: 2.4rem;
+        letter-spacing: -0.5px;
+    }
+
+    .image-comparison-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .image-comparison-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .image-preview-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        overflow: hidden;
+        text-align: center;
+        padding: 1.5rem;
+    }
+
+    .image-preview-card img {
+        width: 100%;
+        max-width: 320px;
+        height: 320px;
+        object-fit: cover;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    /* Confidence chart progress bars */
+    .confidence-value {
+        font-size: 2.8rem;
+        font-weight: 800;
+        color: var(--accent-green);
+        line-height: 1;
+    }
+
+    .progress-bar-custom {
+        height: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3cd070, #2eb25c);
+        border-radius: 5px;
+        transition: width 1s ease-out;
+    }
+
+    .supplement-card {
+        background: rgba(60, 208, 112, 0.05);
+        border: 1px solid rgba(60, 208, 112, 0.15);
+    }
+
+    .supplement-card img {
+        max-width: 180px;
+        height: auto;
+        border-radius: 8px;
+    }
+</style>
+
+<div class="result-header">
+    <span class="badge bg-success bg-opacity-25 text-success mb-2 px-3 py-2 fs-6">Classification Diagnosis</span>
+    <h1 class="disease-title brand-font">{{ title }}</h1>
+</div>
+
+<!-- Image Comparison Pane (Original vs Grad-CAM) -->
+<div class="image-comparison-container">
+    <div class="image-preview-card">
+        <h5 class="text-white mb-3">Original Image</h5>
+        <img src="{{ original_image_url }}" alt="Original leaf upload">
+    </div>
+    
+    <div class="image-preview-card">
+        <h5 class="text-white mb-3">Grad-CAM Saliency Map</h5>
+        {% if gradcam_url %}
+            <img src="{{ gradcam_url }}" alt="Model attention focus map">
+        {% else %}
+            <div class="d-flex align-items-center justify-content-center border border-dashed border-secondary rounded-3" style="height: 320px; color: var(--text-muted);">
+                <p class="mb-0">Grad-CAM visualization unavailable</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row align-items-stretch">
+    <!-- Left Pane: Description & Prevention Details -->
+    <div class="col-lg-8 mb-4 d-flex">
+        <div class="glass-card w-100 d-flex flex-column justify-content-between">
+            <div>
+                <!-- Toggle title based on healthy vs diseased -->
+                <div class="mb-4">
+                    <h4 class="text-white mb-3">
+                        {% if pred in [3, 5, 7, 11, 15, 18, 20, 23, 24, 25, 28, 38] %}
+                            <i class="ion-checkmark-circled text-success me-2"></i>Tips to Cultivate Healthy Plants
+                        {% else %}
+                            <i class="ion-alert-circled text-warning me-2"></i>Description & Diagnostic Summary
+                        {% endif %}
+                    </h4>
+                    <p class="text-muted leading-relaxed">{{ desc }}</p>
+                </div>
+                
+                <hr class="border-secondary my-4">
+                
+                <div>
+                    <h4 class="text-white mb-3">
+                        {% if pred in [3, 5, 7, 11, 15, 18, 20, 23, 24, 25, 28, 38] %}
+                            Benefits
+                        {% else %}
+                            Recommended Interventions & Prevention Steps
+                        {% endif %}
+                    </h4>
+                    <p class="text-muted leading-relaxed" style="white-space: pre-line;">{{ prevent }}</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 pt-4 border-top border-secondary text-start">
+                <a href="/index" class="btn btn-premium-outline">
+                    <i class="ion-chevron-left me-2"></i>Analyze Another Leaf
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Pane: Telemetry Metrics, Top-3 Predictions & Supplements -->
+    <div class="col-lg-4 mb-4">
+        <!-- Confidence Card -->
+        <div class="glass-card mb-4 text-center">
+            <h5 class="text-white mb-2">Model Confidence</h5>
+            <div class="confidence-value brand-font">{{ "%.2f"|format(confidence) }}%</div>
+            <p class="text-muted small mt-2 mb-0">Calculated using soft-max activation outputs</p>
+        </div>
+
+        <!-- Top-3 breakdown Chart -->
+        <div class="glass-card mb-4">
+            <h5 class="text-white mb-3">Top-3 Predicted Classes</h5>
+            {% for pred_item in top_predictions %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small text-white text-truncate" style="max-width: 220px;">{{ pred_item.disease_name }}</span>
+                        <span class="small font-weight-bold" style="color: var(--accent-green);">{{ "%.1f"|format(pred_item.confidence) }}%</span>
+                    </div>
+                    <div class="progress-bar-custom">
+                        <div class="progress-fill" style="width: {{ pred_item.confidence }}%;"></div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Treatment Supplements (Only display if not Background classification) -->
+        {% if pred != 4 %}
+            <div class="glass-card supplement-card text-center">
+                <h5 class="text-white mb-3">Recommended Treatment</h5>
+                {% if simage %}
+                    <img src="{{ simage }}" class="img-fluid mb-3" alt="Supplement packaging">
+                {% endif %}
+                <h6 class="text-white mb-2">{{ sname }}</h6>
+                <div class="d-grid mt-3">
+                    <a target="_blank" href="{{ buy_link }}" class="btn btn-premium btn-sm">
+                        <i class="ion-bag me-2"></i>Order Supplement
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock body %}
