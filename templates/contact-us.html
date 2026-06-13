@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block pagetitle %}Contact Us{% endblock pagetitle %}
+
+{% block body %}
+<style>
+    .contact-hero {
+        text-align: center;
+        padding: 3rem 0 2rem;
+    }
+    .contact-form-card {
+        max-width: 680px;
+        margin: 0 auto;
+    }
+    .form-control-custom {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        color: var(--text-light);
+        padding: 0.75rem 1rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-control-custom:focus {
+        background: rgba(255,255,255,0.08);
+        border-color: var(--accent-green);
+        box-shadow: 0 0 0 3px rgba(60,208,112,0.15);
+        color: var(--text-light);
+        outline: none;
+    }
+    .form-control-custom::placeholder { color: var(--text-muted); }
+    .form-label-custom { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; margin-bottom: 0.4rem; }
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .info-icon {
+        width: 42px; height: 42px;
+        border-radius: 10px;
+        background: rgba(60,208,112,0.1);
+        border: 1px solid rgba(60,208,112,0.2);
+        display: grid;
+        place-items: center;
+        font-size: 1.2rem;
+        color: var(--accent-green);
+        flex-shrink: 0;
+    }
+    .success-toast {
+        display: none;
+        padding: 0.85rem 1.2rem;
+        background: rgba(60,208,112,0.12);
+        border: 1px solid rgba(60,208,112,0.3);
+        border-radius: 10px;
+        color: var(--accent-green);
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+    }
+</style>
+
+<div class="contact-hero">
+    <span class="badge bg-success bg-opacity-25 text-success mb-3 px-3 py-2">Get In Touch</span>
+    <h1 class="brand-font" style="font-size:2.5rem; font-weight:800;">Contact & Support</h1>
+    <p class="text-muted mt-2" style="max-width:500px; margin:0 auto;">Have a question about LeafAI, need help with your diagnosis results, or want to collaborate? We'd love to hear from you.</p>
+</div>
+
+<div class="row mt-4 align-items-start">
+    <!-- Contact Form -->
+    <div class="col-lg-7 mb-4">
+        <div class="glass-card contact-form-card">
+            <h4 class="text-white mb-4">Send a Message</h4>
+            <div class="success-toast" id="successToast">
+                <i class="ion-checkmark-circled me-2"></i>Message sent successfully! We'll get back to you within 24 hours.
+            </div>
+            <form id="contactForm" onsubmit="handleSubmit(event)">
+                <div class="row">
+                    <div class="col-sm-6 mb-3">
+                        <label class="form-label-custom">First Name</label>
+                        <input type="text" class="form-control-custom w-100" placeholder="John" required>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <label class="form-label-custom">Last Name</label>
+                        <input type="text" class="form-control-custom w-100" placeholder="Doe" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label-custom">Email Address</label>
+                    <input type="email" class="form-control-custom w-100" placeholder="john@example.com" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label-custom">Subject</label>
+                    <input type="text" class="form-control-custom w-100" placeholder="e.g. Diagnosis result question" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label-custom">Message</label>
+                    <textarea class="form-control-custom w-100" rows="5" placeholder="Describe your question or issue..." required></textarea>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-premium btn-lg">
+                        <i class="ion-paper-airplane me-2"></i>Send Message
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="col-lg-5 mb-4">
+        <div class="glass-card h-100">
+            <h4 class="text-white mb-4">Contact Information</h4>
+            <div class="info-item">
+                <div class="info-icon"><i class="ion-email"></i></div>
+                <div>
+                    <div class="text-white fw-600" style="font-weight:600;">Email Support</div>
+                    <div class="text-muted small">support@leafai.example.com</div>
+                    <div class="text-muted small">Response within 24 hours</div>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-icon"><i class="ion-social-github"></i></div>
+                <div>
+                    <div class="text-white fw-600" style="font-weight:600;">GitHub Repository</div>
+                    <div class="text-muted small">Report issues or contribute via GitHub</div>
+                    <a href="https://github.com/gnaneshwar86/AI-Powered-Plant-Disease-Detection-System" target="_blank" class="small" style="color:var(--accent-green);">View on GitHub →</a>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-icon"><i class="ion-social-linkedin"></i></div>
+                <div>
+                    <div class="text-white fw-600" style="font-weight:600;">LinkedIn</div>
+                    <div class="text-muted small">Connect for professional inquiries</div>
+                </div>
+            </div>
+            <hr class="border-secondary my-4">
+            <div class="text-muted small">
+                <i class="ion-clock me-2" style="color:var(--accent-green);"></i>
+                Support hours: Mon–Fri, 9am–6pm IST
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function handleSubmit(e) {
+    e.preventDefault();
+    const toast = document.getElementById('successToast');
+    toast.style.display = 'block';
+    e.target.reset();
+    setTimeout(() => toast.style.display = 'none', 5000);
+}
+</script>
+{% endblock body %}

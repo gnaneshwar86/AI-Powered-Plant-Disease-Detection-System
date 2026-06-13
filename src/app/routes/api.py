@@ -141,7 +141,7 @@ def predict():
         supp_buy = supplement_info['buy link'][primary_idx]
         
         # Save original file temporarily to overlay Grad-CAM
-        uploads_dir = os.path.join(current_app.root_path, 'static', 'uploads')
+        uploads_dir = os.path.join(current_app.static_folder, 'uploads')
         os.makedirs(uploads_dir, exist_ok=True)
         
         temp_filename = f"temp_{int(time.time())}_{secure_filename(file.filename)}"

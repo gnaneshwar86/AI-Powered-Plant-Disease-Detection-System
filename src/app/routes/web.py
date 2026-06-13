@@ -62,7 +62,7 @@ def submit():
         if model is None or disease_info is None or supplement_info is None:
             raise RuntimeError("Flask app state is uninitialized. Model or metadata are missing.")
             
-        uploads_dir = os.path.join(current_app.root_path, 'static', 'uploads')
+        uploads_dir = os.path.join(current_app.static_folder, 'uploads')
         os.makedirs(uploads_dir, exist_ok=True)
         
         filename = secure_filename(file.filename)
